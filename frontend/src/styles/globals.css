@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Source Sans Pro font */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&display=swap');
+
+/* Custom base styles */
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Custom component styles */
+@layer components {
+  .btn-primary {
+    @apply bg-cbo-purple text-white font-source-sans font-medium py-3 px-4 rounded-[52px] hover:bg-[#4318d6] focus:outline-none focus:ring-2 focus:ring-cbo-purple focus:ring-offset-2 transition-all;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 bg-cbo-purple-light border-0 rounded-[12px] font-source-sans text-cbo-text-dark placeholder-cbo-text-secondary focus:outline-none focus:ring-2 focus:ring-cbo-purple focus:bg-white transition-all;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+  }
+
+  /* CBO custom scrollbar */
+  .scrollbar-cbo {
+    /* Firefox */
+    scrollbar-width: thin;                /* thin | auto | none */
+    scrollbar-color: #9aa0ae #f3f4f6;     /* thumb color | track color */
+  }
+
+  /* WebKit (Chrome, Edge, Safari) */
+  .scrollbar-cbo::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-cbo::-webkit-scrollbar-track {
+    background: #f3f4f6; /* Tailwind gray-100 */
+    border-radius: 9999px;
+  }
+
+  .scrollbar-cbo::-webkit-scrollbar-thumb {
+    background-color: #b1b5c2; /* subtle gray to match UI accents */
+    border-radius: 9999px;
+    border: 2px solid #f3f4f6; /* creates inset effect */
+  }
+
+  .scrollbar-cbo::-webkit-scrollbar-thumb:hover {
+    background-color: #9aa0ae; /* slightly darker on hover */
+  }
+
+  .scrollbar-cbo::-webkit-scrollbar-corner {
+    background: #f3f4f6;
+  }
+}

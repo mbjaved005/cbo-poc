@@ -1,0 +1,38 @@
+# CBO Banking App PoC - Backend Dependencies
+
+# FastAPI and ASGI server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Authentication and security
+pyjwt==2.8.0
+python-multipart==0.0.6
+passlib[bcrypt]==1.7.4
+
+# HTTP client for Vectara API integration
+httpx==0.25.2
+requests==2.31.0
+
+# Data validation and serialization
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database (SQLite for PoC, PostgreSQL for production)
+sqlalchemy==2.0.23
+alembic==1.13.1
+psycopg2-binary==2.9.9
+asyncpg==0.29.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Logging and monitoring
+structlog==23.2.0
+
+# Development and testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Optional: For production deployment
+gunicorn==21.2.0
