@@ -42,7 +42,6 @@ pnpm-debug.log*
 
 # Frontend env
 frontend/.env
-frontend/.env.*
 frontend/.env.local
 
 # Playwright / Automation
