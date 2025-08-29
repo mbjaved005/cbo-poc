@@ -29,6 +29,84 @@ You can start both backend and frontend together via the unified dev server:
 python dev-server.py
 ```
 
+## 🐳 Run with Docker (Recommended for easy setup)
+
+### Prerequisites
+- Docker Desktop 4.x+
+- Docker Compose v2 (bundled with Docker Desktop)
+
+### Start everything (one command)
+
+```bash
+docker compose up --build
+```
+
+This will:
+- Build and run the FastAPI backend at `http://localhost:8000`
+- Build and run the Next.js frontend at `http://localhost:3000`
+
+### Environment variables
+- Backend loads variables from `backend/.env`. Copy and fill it first:
+  ```bash
+  cp backend/.env.example backend/.env
+  # edit backend/.env to add Vectara creds, JWT secret, etc.
+  ```
+  PowerShell (Windows):
+  ```powershell
+  Copy-Item backend/.env.example backend/.env
+  # then edit backend/.env
+  ```
+- Frontend connects to backend via internal Docker DNS `http://backend:8000` (configured in `docker-compose.yml`).
+- To point to a different backend, override at runtime:
+  ```bash
+  BACKEND_URL=http://my-backend:8000 NEXT_PUBLIC_API_URL=http://my-backend:8000 docker compose up --build
+  ```
+
+#### Database config (Docker)
+- By default, `docker-compose.yml` runs a Postgres service (`services.db`) and sets the backend `DATABASE_URL` via compose environment to:
+  ```
+  postgresql+psycopg2://cbo:cbo@db:5432/cbo_db
+  ```
+  This compose-level value overrides the same key from `backend/.env`.
+
+- If you prefer `.env` to control the database URL:
+  1) Remove `DATABASE_URL` from `services.backend.environment` in `docker-compose.yml`
+  2) Set it in `backend/.env`:
+     ```
+     DATABASE_URL=postgresql+psycopg2://cbo:cbo@db:5432/cbo_db
+     ```
+
+- To use a locally installed Postgres (outside Docker) from inside containers:
+  - On macOS/Windows:
+    ```
+    DATABASE_URL=postgresql+psycopg2://<user>:<pass>@host.docker.internal:5432/<db>
+    ```
+  - On Linux, add to `services.backend`:
+    ```yaml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ```
+    Then set `DATABASE_URL=...@host.docker.internal:5432/...` in `backend/.env`.
+
+### Useful commands
+- Rebuild after code changes: `docker compose build`
+- Start/stop in background: `docker compose up -d` / `docker compose down`
+- View logs: `docker compose logs -f backend` or `docker compose logs -f frontend`
+
+### Notes
+- For live-reload development, uncomment the volume mounts in `docker-compose.yml` and run dev commands (`uvicorn --reload`, `npm run dev`).
+
+### Docker vs dev-server.py
+- __Why Docker?__
+  - Consistent env for all contributors (no local Python/Node setup)
+  - Easy onboarding: one command to run both services
+  - Matches production-like setup and simplifies CI/CD
+  - Isolated dependencies; fewer host conflicts
+- __When to use dev-server.py?__
+  - Quick local iteration without containers
+  - When Docker isn't available
+  - Note: not production-like and may hit local dependency/version drift
+
 ## 🎯 Project Overview
 
 ### Core Features
@@ -166,13 +244,13 @@ VECTARA_API_KEY=your-api-key
 
 ### Environment Variables for Production
 ```bash
-# JWT Secret
+# Backend (FastAPI)
 JWT_SECRET_KEY=your-production-secret
-
-# Vectara Configuration
 VECTARA_CUSTOMER_ID=your-customer-id
 VECTARA_CORPUS_ID=your-corpus-id
 VECTARA_API_KEY=your-api-key
+# optional
+OPENAI_API_KEY=your-openai-key
 
 # Frontend API URL
 NEXT_PUBLIC_API_URL=https://your-api-domain.vercel.app

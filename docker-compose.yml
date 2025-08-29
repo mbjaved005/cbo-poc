@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: cbo-db
+    environment:
+      POSTGRES_USER: cbo
+      POSTGRES_PASSWORD: cbo
+      POSTGRES_DB: cbo_db
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cbo -d cbo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cbo-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://cbo:cbo@db:5432/cbo_db
+    depends_on:
+      db:
+        condition: service_healthy
+    # For live-reload dev, uncomment and run uvicorn with --reload
+    # volumes:
+    #   - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cbo-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+    # For live-reload dev, uncomment and run npm run dev
+    # volumes:
+    #   - ./frontend:/app
+
+volumes:
+  db-data:

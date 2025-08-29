@@ -8,6 +8,8 @@ interface ChatRequest {
 
 interface ChatResponse {
   response: string
+  // Backward-compat for UI expecting `message`
+  message?: string
   conversation_id: string
   sources?: Array<{
     text: string
@@ -61,8 +63,15 @@ export default async function handler(
       })
     }
 
-    const data: ChatResponse = await response.json()
-    return res.status(200).json(data)
+    const raw = await response.json()
+    const mapped: ChatResponse = {
+      response: raw.response ?? raw.message ?? '',
+      message: raw.response ?? raw.message ?? '',
+      conversation_id: raw.conversation_id ?? raw.id ?? conversation_id ?? '',
+      sources: raw.sources ?? raw.response?.sources ?? [],
+      language,
+    }
+    return res.status(200).json(mapped)
 
   } catch (error) {
     console.error('Chat API error:', error)
