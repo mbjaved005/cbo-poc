@@ -13,6 +13,8 @@ const assets = [
   { url: 'http://localhost:3845/assets/0bc080abbdd53a86af9a5de54fba94c1dd000c7e.svg', name: 'paperclip.svg' },
   { url: 'http://localhost:3845/assets/f366b46fa9d9207f4b7d0b1a3c82c570e61ea5e6.png', name: 'rectangle1076.png' },
   { url: 'http://localhost:3845/assets/05cfb701daa6a40cc00267bed6e8282e211bc4fb.svg', name: 'stars.svg' },
+  // Exact pill icon from Figma (node 1496:1551)
+  { url: 'http://localhost:3845/assets/757444f1d5f8178abff14ffe8d81b9ba633a6767.svg', name: 'fi_2997933.svg' },
   { url: 'http://localhost:3845/assets/8b45055fbf84d40db65433da1f9ce798f7f7d569.svg', name: 'mail-outline.svg' },
   { url: 'http://localhost:3845/assets/e8b2e6f6a0154e5efaf44e9e721d9aadc94408a1.svg', name: 'bookmark-outline.svg' },
   { url: 'http://localhost:3845/assets/f5197be06ed3c36a5362712c01ca77e7c8c3cfaf.svg', name: 'group.svg' },
@@ -28,19 +30,41 @@ const assets = [
 function downloadFile(url, filename) {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https:') ? https : http;
-    const file = fs.createWriteStream(filename);
-    
-    protocol.get(url, (response) => {
-      response.pipe(file);
-      file.on('finish', () => {
-        file.close();
-        console.log(`Downloaded: ${filename}`);
-        resolve();
+
+    protocol
+      .get(url, (response) => {
+        const { statusCode, headers } = response;
+        const contentLength = parseInt(headers['content-length'] || '0', 10);
+
+        if (statusCode !== 200 || contentLength < 100) {
+          // Drain and discard response to free socket
+          response.resume();
+          const reason = `Skip: ${path.basename(filename)} (status=${statusCode}, length=${contentLength})`;
+          console.warn(reason);
+          return resolve({ skipped: true, reason });
+        }
+
+        const tmpFile = `${filename}.tmp`;
+        const file = fs.createWriteStream(tmpFile);
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close(() => {
+            // Atomic replace
+            fs.rename(tmpFile, filename, (err) => {
+              if (err) return reject(err);
+              console.log(`Downloaded: ${filename} (${contentLength} bytes)`);
+              resolve({ skipped: false });
+            });
+          });
+        });
+        file.on('error', (err) => {
+          fs.unlink(tmpFile, () => {});
+          reject(err);
+        });
+      })
+      .on('error', (err) => {
+        reject(err);
       });
-    }).on('error', (err) => {
-      fs.unlink(filename, () => {}); // Delete the file on error
-      reject(err);
-    });
   });
 }
 
@@ -49,7 +73,16 @@ async function downloadAllAssets() {
   
   for (const asset of assets) {
     try {
-      await downloadFile(asset.url, asset.name);
+      const outPath = path.join(__dirname, asset.name);
+      const result = await downloadFile(asset.url, outPath);
+      if (result && result.skipped) {
+        // Keep existing file if present
+        if (fs.existsSync(outPath)) {
+          console.log(`Kept existing: ${asset.name}`);
+        } else {
+          console.warn(`Missing asset (not downloaded): ${asset.name}`);
+        }
+      }
     } catch (error) {
       console.error(`Failed to download ${asset.name}:`, error.message);
     }

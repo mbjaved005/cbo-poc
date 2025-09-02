@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+/* eslint-disable @next/next/no-img-element */
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { getUserInfo, logout } from '../utils/auth'
 
@@ -12,7 +13,6 @@ const imgGroup5 = "/assets/cbo-logo.svg";
 const imgGroup6 = "/assets/group6.svg";
 const imgCopyIcon = "/assets/copy-icon.svg";
 const imgLikeIcon = "/assets/like-icon.svg";
-const imgDislikeIcon = "/assets/like-icon.svg";
 const imgTablerRefresh = "/assets/refresh-icon.svg";
 const imgPaperclip = "/assets/paperclip.svg";
 const imgLine17 = "/assets/line17.svg";
@@ -76,28 +76,34 @@ export default function ChatPage() {
     )
   }
   const [refreshingMessageId, setRefreshingMessageId] = useState<string | null>(null)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [summaryText, setSummaryText] = useState('')
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<ChatSession | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   // Generate chat title from first user message
-  const generateChatTitle = (firstMessage: string): string => {
+  const generateChatTitle = useCallback((firstMessage: string): string => {
     const maxLength = 30
     if (firstMessage.length <= maxLength) {
       return firstMessage
     }
     return firstMessage.substring(0, maxLength) + '...'
-  }
+  }, [])
 
   // Load chat sessions from database with localStorage fallback
-  const loadChatSessions = async (): Promise<ChatSession[]> => {
+  const loadChatSessions = useCallback(async (): Promise<ChatSession[]> => {
     try {
       const token = localStorage.getItem('token')
       if (!token) return []
@@ -130,7 +136,7 @@ export default function ChatPage() {
       // Fallback to localStorage
       return loadChatSessionsFromStorage()
     }
-  }
+  }, [])
 
   // Fallback function to load from localStorage
   const loadChatSessionsFromStorage = (): ChatSession[] => {
@@ -161,7 +167,7 @@ export default function ChatPage() {
   }
 
   // Create new chat session in database with fallback
-  const createChatSessionInDB = async (title: string): Promise<string | null> => {
+  const createChatSessionInDB = useCallback(async (title: string): Promise<string | null> => {
     try {
       const token = localStorage.getItem('token')
       if (!token) return null
@@ -183,10 +189,10 @@ export default function ChatPage() {
       console.error('Error creating chat session in database:', e)
     }
     return null
-  }
+  }, [])
 
   // Create new chat session
-  const createNewChatSession = async (): Promise<ChatSession> => {
+  const createNewChatSession = useCallback(async (): Promise<ChatSession> => {
     const title = language === 'ar' ? 'محادثة جديدة' : 'New Chat'
 
     // Try database first, fallback to local ID
@@ -199,13 +205,14 @@ export default function ChatPage() {
       createdAt: new Date(),
       updatedAt: new Date()
     }
-  }
+  }, [language, createChatSessionInDB])
 
   // Copy message to clipboard
-  const handleCopyMessage = async (text: string) => {
+  const handleCopyMessage = async (id: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      // Could add a toast notification here
+      setCopiedMessageId(id)
+      setTimeout(() => setCopiedMessageId(null), 1500)
     } catch (err) {
       console.error('Failed to copy text: ', err)
     }
@@ -341,7 +348,7 @@ export default function ChatPage() {
   }
 
   // Update current session with new messages
-  const updateCurrentSession = (newMessages: Message[]) => {
+  const updateCurrentSession = useCallback((newMessages: Message[]) => {
     setChatSessions(prevSessions => {
       const updatedSessions = prevSessions.map(session => {
         if (session.id === currentSessionId) {
@@ -364,7 +371,7 @@ export default function ChatPage() {
       saveChatSessions(updatedSessions)
       return updatedSessions
     })
-  }
+  }, [currentSessionId, generateChatTitle])
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -409,7 +416,7 @@ export default function ChatPage() {
     }
 
     checkAuth()
-  }, [router, language])
+  }, [router, language, loadChatSessions, createNewChatSession])
 
   useEffect(() => {
     scrollToBottom()
@@ -430,7 +437,7 @@ export default function ChatPage() {
     if (messages.length > 0 && currentSessionId) {
       updateCurrentSession(messages)
     }
-  }, [messages, currentSessionId])
+  }, [messages, currentSessionId, updateCurrentSession])
 
   useEffect(() => {
     if (conversationId) {
@@ -772,6 +779,87 @@ export default function ChatPage() {
     )
   }
 
+  // Delete session helpers
+  const removeSessionLocally = async (sessionId: string) => {
+    setChatSessions(prev => {
+      const remaining = prev.filter(s => s.id !== sessionId)
+      saveChatSessions(remaining)
+      // If we removed the current session, switch context
+      if (currentSessionId === sessionId) {
+        if (remaining.length > 0) {
+          // Pick most recently updated
+          const next = [...remaining].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
+          setCurrentSessionId(next.id)
+          setConversationId(next.id)
+          setMessages(next.messages)
+          localStorage.setItem('current_session_id', next.id)
+          localStorage.setItem('conversation_id', next.id)
+        } else {
+          // Create a fresh session if none remain
+          createNewChatSession().then(newSession => {
+            const updated = [newSession]
+            setChatSessions(updated)
+            saveChatSessions(updated)
+            setCurrentSessionId(newSession.id)
+            setConversationId(newSession.id)
+            setMessages([])
+            localStorage.setItem('current_session_id', newSession.id)
+            localStorage.setItem('conversation_id', newSession.id)
+          })
+        }
+      }
+      return remaining
+    })
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!sessionToDelete) return
+    setIsDeleting(true)
+    setDeleteError(null)
+    try {
+      const token = localStorage.getItem('token')
+
+      // Best-effort backend delete; never redirect here
+      if (token) {
+        try {
+          await fetch(`http://localhost:8000/chat-sessions/${encodeURIComponent(sessionToDelete.id)}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        } catch (err) {
+          console.warn('Backend delete request failed, proceeding with local removal', err)
+        }
+      } else {
+        console.warn('No token found, performing local removal only')
+      }
+
+      // Local removal is the source of truth for UI responsiveness
+      await removeSessionLocally(sessionToDelete.id)
+      setShowDeleteModal(false)
+      setSessionToDelete(null)
+    } catch (e: any) {
+      console.error('Error deleting session:', e)
+      if (sessionToDelete) {
+        await removeSessionLocally(sessionToDelete.id)
+        setShowDeleteModal(false)
+        setSessionToDelete(null)
+      } else {
+        setDeleteError(language === 'ar' ? 'تعذر حذف المحادثة.' : 'Unable to delete the chat.')
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Cancel delete action and close modal
+  const handleCancelDelete = () => {
+    if (isDeleting) return
+    setShowDeleteModal(false)
+    setSessionToDelete(null)
+  }
+
   const filterOptions = [
     { id: 'banking', label: language === 'ar' ? 'الخدمات المصرفية' : 'Banking Services' },
     { id: 'loans', label: language === 'ar' ? 'القروض' : 'Loans' },
@@ -850,7 +938,7 @@ export default function ChatPage() {
                 .map((session) => (
                   <div
                     key={session.id}
-                    className={`relative w-full ${currentSessionId === session.id ? 'bg-[rgba(49,68,94,0.05)] rounded-[5px]' : ''
+                    className={`group relative w-full ${currentSessionId === session.id ? 'bg-[rgba(49,68,94,0.05)] rounded-[5px]' : ''
                       }`}
                   >
                     <button
@@ -860,6 +948,18 @@ export default function ChatPage() {
                       <div className="font-['Source_Sans_Pro:Regular',_sans-serif] text-[#17365f] text-[20px] truncate" dir={language === 'ar' ? 'rtl' : 'ltr'}>
                         {session.title}
                       </div>
+                    </button>
+                    {/* Delete icon button */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSessionToDelete(session); setDeleteError(null); setShowDeleteModal(true); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 text-red-600 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                      title={language === 'ar' ? 'حذف المحادثة' : 'Delete chat'}
+                      aria-label={language === 'ar' ? 'حذف المحادثة' : 'Delete chat'}
+                    >
+                      {/* Inline trash SVG */}
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                        <path d="M9 3a1 1 0 0 0-1 1v1H5.5a1 1 0 1 0 0 2H6v11a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V7h.5a1 1 0 1 0 0-2H16V4a1 1 0 0 0-1-1H9zm2 2h2v1h-2V5zM8 7h8v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V7zm2 2a1 1 0 0 1 1 1v7a1 1 0 1 1-2 0V10a1 1 0 0 1 1-1zm4 0a1 1 0 0 1 1 1v7a1 1 0 1 1-2 0V10a1 1 0 0 1 1-1z" />
+                      </svg>
                     </button>
                   </div>
                 ))}
@@ -1038,8 +1138,8 @@ export default function ChatPage() {
                             </div>
                             <div className="content-stretch flex gap-[13px] items-center justify-start relative shrink-0 mt-1" data-node-id="1496:2153">
                               <button
-                                onClick={() => handleCopyMessage(message.text)}
-                                className="relative shrink-0 size-[20px] opacity-60 hover:opacity-100 transition-opacity"
+                                onClick={() => handleCopyMessage(message.id, message.text)}
+                                className={`relative shrink-0 size-[20px] transition-opacity ${copiedMessageId === message.id ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
                                 title="Copy to clipboard"
                                 data-node-id="1496:2154"
                               >
@@ -1047,7 +1147,7 @@ export default function ChatPage() {
                               </button>
                               <button
                                 onClick={() => handleLikeMessage(message.id)}
-                                className="relative shrink-0 size-[20px] opacity-60 hover:opacity-100 transition-opacity"
+                                className={`relative shrink-0 size-[20px] transition-opacity ${message.liked ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
                                 title="Like message"
                                 data-node-id="1496:2155"
                               >
@@ -1055,7 +1155,7 @@ export default function ChatPage() {
                               </button>
                               <button
                                 onClick={() => handleDislikeMessage(message.id)}
-                                className="relative shrink-0 size-[20px] opacity-60 hover:opacity-100 transition-opacity"
+                                className={`relative shrink-0 size-[20px] transition-opacity ${message.disliked ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
                                 title="Dislike message"
                                 data-node-id="1496:2156"
                               >
@@ -1067,11 +1167,15 @@ export default function ChatPage() {
                               </button>
                               <button
                                 onClick={() => handleRefreshMessage(message.id, message.text)}
-                                className="relative shrink-0 size-[20px] opacity-60 hover:opacity-100 transition-opacity"
+                                className={`relative shrink-0 size-[20px] transition-opacity ${refreshingMessageId === message.id ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
                                 title="Refresh message"
                                 data-node-id="1496:2157"
                               >
-                                <img alt="Refresh" className="block max-w-none size-full" src={imgTablerRefresh} />
+                                {refreshingMessageId === message.id ? (
+                                  <div className="block max-w-none size-full animate-spin border-2 border-[#17365f] border-t-transparent rounded-full" />
+                                ) : (
+                                  <img alt="Refresh" className="block max-w-none size-full" src={imgTablerRefresh} />
+                                )}
                               </button>
                             </div>
                           </div>
@@ -1254,11 +1358,11 @@ export default function ChatPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-[rgba(114,31,35,0.08)] box-border content-stretch flex gap-[7px] items-center justify-start pl-[15px] pr-[9px] py-1.5 relative rounded-[50px] shrink-0" data-node-id="1496:2043">
-                    <div className="font-['Source_Sans_Pro:SemiBold',_sans-serif] leading-[0] not-italic relative shrink-0 text-[#721f23] text-[18px] text-nowrap" data-node-id="1496:2044">
+                  <div className="bg-[rgba(114,31,35,0.08)] box-border flex items-center justify-start gap-2 pl-4 pr-3 py-2 relative rounded-full shrink-0" data-node-id="1496:2043">
+                    <div className="font-['Source_Sans_Pro:SemiBold',_sans-serif] not-italic relative shrink-0 text-[#721f23] text-[18px] leading-[22px] text-nowrap" data-node-id="1496:2044">
                       <p className="leading-[normal] whitespace-pre">{language === 'ar' ? 'سؤال/جواب' : 'Question/Answer'}</p>
                     </div>
-                    <div className="flex h-[0px] items-center justify-center relative shrink-0 w-[0px]">
+                    <div className="flex items-center justify-center relative shrink-0">
                       <div className="flex-none rotate-[45deg]">
                         <div className="overflow-clip relative size-[19px]" data-name="fi_2997933" data-node-id="1496:2045">
                           <img alt="" className="block max-w-none size-full" src={imgFi2997933} />
@@ -1358,6 +1462,46 @@ export default function ChatPage() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={handleCancelDelete} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold text-[#15182f]">
+                {language === 'ar' ? 'تأكيد الحذف' : 'Confirm Deletion'}
+              </h3>
+              <p className="mt-2 text-[#63667d]">
+                {language === 'ar'
+                  ? `هل أنت متأكد أنك تريد حذف هذه المحادثة${sessionToDelete ? `: "${sessionToDelete.title}"` : ''}؟ لا يمكن التراجع عن هذا الإجراء.`
+                  : `Are you sure you want to delete this chat${sessionToDelete ? `: "${sessionToDelete.title}"` : ''}? This action cannot be undone.`}
+              </p>
+              {deleteError && (
+                <p className="mt-3 text-red-600 text-sm">{deleteError}</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-md border border-gray-300 text-[#15182f] hover:bg-gray-50 disabled:opacity-50"
+              >
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? (language === 'ar' ? 'جارٍ الحذف...' : 'Deleting...') : (language === 'ar' ? 'حذف' : 'Delete')}
+              </button>
+            </div>
           </div>
         </div>
       )}
