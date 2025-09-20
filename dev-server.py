@@ -23,8 +23,7 @@ def run_backend():
     env = os.environ.copy()
     
     try:
-        os.chdir(backend_dir)
-        subprocess.run([sys.executable, "main.py"], check=True, env=env)
+        subprocess.run([sys.executable, "main.py"], check=True, env=env, cwd=str(backend_dir))
     except KeyboardInterrupt:
         print("\n🛑 Backend server stopped")
     except Exception as e:
@@ -42,11 +41,27 @@ def run_frontend():
             print(f"❌ Frontend directory not found: {frontend_dir}")
             return
             
-        os.chdir(frontend_dir)
+        # Ensure dependencies are installed
+        node_modules = frontend_dir / "node_modules"
+        lockfile = frontend_dir / "package-lock.json"
+        if not node_modules.exists():
+            print("📦 Installing frontend dependencies (this may take a minute)...")
+            install_cmd = "npm ci" if lockfile.exists() else "npm install"
+            subprocess.run(["powershell", "-Command", install_cmd], check=True, cwd=str(frontend_dir))
+
+        # Verify 'next' binary exists in local node_modules after install
+        next_bin_unix = frontend_dir / "node_modules" / ".bin" / "next"
+        next_bin_win = frontend_dir / "node_modules" / ".bin" / "next.cmd"
+        if not next_bin_unix.exists() and not next_bin_win.exists():
+            print("ℹ️ 'next' not found locally. Ensuring dependencies are installed...")
+            subprocess.run(["powershell", "-Command", "npm install"], check=True, cwd=str(frontend_dir))
+
         # Use powershell to run npm on Windows
-        subprocess.run(["powershell", "-Command", "npm run dev"], check=True)
+        subprocess.run(["powershell", "-Command", "npm run dev"], check=True, cwd=str(frontend_dir))
     except KeyboardInterrupt:
         print("\n🛑 Frontend server stopped")
+    except FileNotFoundError:
+        print("❌ Frontend error: npm was not found on your PATH. Please install Node.js from https://nodejs.org and restart.")
     except Exception as e:
         print(f"❌ Frontend error: {e}")
 
