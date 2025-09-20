@@ -109,7 +109,7 @@ export default function ChatPage() {
       if (!token) return []
 
       // Try to load from database first
-      const response = await fetch('http://localhost:8000/chat-sessions', {
+      const response = await fetch('/api/chat-sessions', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -172,7 +172,7 @@ export default function ChatPage() {
       const token = localStorage.getItem('token')
       if (!token) return null
 
-      const response = await fetch('http://localhost:8000/chat-sessions', {
+      const response = await fetch('/api/chat-sessions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -257,7 +257,7 @@ export default function ChatPage() {
     setRefreshingMessageId(messageId)
 
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -315,7 +315,7 @@ export default function ChatPage() {
         ? chatHistory.substring(0, maxLength) + '...[conversation truncated]'
         : chatHistory
 
-      const response = await fetch('http://localhost:8000/chat-summary', {
+      const response = await fetch('/api/chat-summary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -474,27 +474,54 @@ export default function ChatPage() {
 
     try {
       const token = localStorage.getItem('token')
+      console.log('Token check:', token ? 'Token exists' : 'No token found')
       if (!token) {
+        console.log('No token, redirecting to login')
         router.push('/login')
         return
       }
 
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          message: question,
-          conversation_id: conversationId || undefined,
-          language,
-          conversation_history: messages.map(msg => ({
-            role: msg.sender === 'user' ? 'user' : 'assistant',
-            content: msg.text
-          }))
-        }),
-      })
+      let response: Response
+
+      if (selectedFile) {
+        // Handle file upload
+        const formData = new FormData()
+        formData.append('file', selectedFile)
+        formData.append('message', inputValue.trim() || '')
+        formData.append('conversation_id', conversationId || '')
+        formData.append('language', language)
+        if (selectedFilters.length > 0) {
+          formData.append('filters', JSON.stringify(selectedFilters))
+        }
+
+        response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        })
+      } else {
+        // Handle regular text message
+        console.log('Making API call to /api/chat')
+        response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message: question,
+            conversation_id: conversationId || undefined,
+            language,
+            conversation_history: messages.map(msg => ({
+              role: msg.sender === 'user' ? 'user' : 'assistant',
+              content: msg.text
+            }))
+          }),
+        })
+        console.log('API response status:', response.status)
+      }
 
       const data = await response.json()
 
@@ -512,7 +539,16 @@ export default function ChatPage() {
         if (data.conversation_id) {
           setConversationId(data.conversation_id)
         }
+
+        // Clear selected file after successful upload
+        if (selectedFile) {
+          setSelectedFile(null)
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+          }
+        }
       } else {
+        // Handle specific error cases
         if (response.status === 401) {
           router.push('/login')
           return
@@ -527,6 +563,7 @@ export default function ChatPage() {
           timestamp: new Date()
         }
         setMessages(prev => [...prev, errorMessage])
+        console.error('Chat API error:', data.detail)
       }
     } catch (error) {
       const errorMessage: Message = {
@@ -822,7 +859,7 @@ export default function ChatPage() {
       // Best-effort backend delete; never redirect here
       if (token) {
         try {
-          await fetch(`http://localhost:8000/chat-sessions/${encodeURIComponent(sessionToDelete.id)}`, {
+          await fetch(`/api/chat-sessions/${encodeURIComponent(sessionToDelete.id)}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`
