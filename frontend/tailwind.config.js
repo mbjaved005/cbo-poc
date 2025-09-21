@@ -30,7 +30,7 @@ module.exports = {
         }
       },
       fontFamily: {
-        arabic: ['Cairo', 'Amiri', 'sans-serif'],
+        arabic: ['Noto Sans Arabic', 'Cairo', 'Amiri', 'sans-serif'],
         'source-sans': ['Source Sans Pro', 'sans-serif'],
       }
     },
