@@ -1338,11 +1338,12 @@ export default function ChatPage() {
                 <div className="content-stretch flex gap-3 items-center justify-start relative shrink-0" data-node-id="1496:2039">
                   <button
                     type="button"
-                    onClick={handleFileSelect}
-                    className="h-[21px] relative shrink-0 w-5 hover:opacity-70 transition-opacity"
+                    disabled
+                    className="h-[21px] relative shrink-0 w-5 opacity-60 cursor-not-allowed"
                     data-name="paperclip"
                     data-node-id="1496:2040"
-                    title={language === 'ar' ? 'إرفاق ملف' : 'Attach file'}
+                    title={language === 'ar' ? 'قريباً' : 'Coming soon'}
+                    aria-label={language === 'ar' ? 'إرفاق ملف - قريباً' : 'Attach file - Coming soon'}
                   >
                     <img alt="" className="block max-w-none size-full" src={imgPaperclip} />
                   </button>
@@ -1352,6 +1353,7 @@ export default function ChatPage() {
                     onChange={handleFileChange}
                     accept=".pdf,.docx,.xlsx,.pptx,.txt,.jpg,.jpeg,.png,.gif"
                     className="hidden"
+                    disabled
                   />
                   <div className="flex h-[0px] items-center justify-center relative shrink-0 w-[0px]">
                     <div className="flex-none rotate-[90deg]">
@@ -1376,7 +1378,14 @@ export default function ChatPage() {
                   </div>
                 </div>
                 <div className="content-stretch flex gap-4 items-center justify-end relative shrink-0" data-node-id="1496:2049">
-                  <div className="overflow-clip relative shrink-0 size-[21px]" data-name="fi_709682" data-node-id="1496:2050">
+                  <div
+          className="overflow-clip relative shrink-0 size-[21px] opacity-60 cursor-not-allowed"
+          data-name="fi_709682"
+          data-node-id="1496:2050"
+          title={language === 'ar' ? 'قريباً' : 'Coming soon'}
+          aria-label={language === 'ar' ? 'المايكروفون - قريباً' : 'Microphone - Coming soon'}
+          role="img"
+        >
                     <div className="absolute bottom-0 left-[18%] right-[18%] top-[48.12%]" data-name="Group" data-node-id="1496:2052">
                       <img alt="" className="block max-w-none size-full" src={imgGroup} />
                     </div>
