@@ -33,6 +33,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Ensure database is initialized at startup (creates tables and default users)
+@app.on_event("startup")
+async def _init_db_on_startup():
+    try:
+        ok = init_database()
+        if ok:
+            logger.info("Database initialized successfully on startup")
+        else:
+            logger.warning("Database initialization returned False on startup")
+    except Exception as e:
+        logger.error(f"Database initialization error on startup: {str(e)}")
+
 # CORS middleware for frontend integration
 app.add_middleware(
     CORSMiddleware,
