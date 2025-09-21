@@ -1022,11 +1022,10 @@ export default function ChatPage() {
               data-testid="language-toggle"
             >
               <div
-                className="flex flex-col font-['Source_Sans_Pro:Regular',_'Noto_Sans_Arabic:Regular',_sans-serif] justify-center leading-[0] relative shrink-0 text-[#000000] text-[20px] text-center text-nowrap"
+                className="flex flex-col justify-center leading-none relative shrink-0 text-[#000000] text-[20px] text-center text-nowrap font-arabic"
                 data-node-id="1489:1965"
-                style={{ fontVariationSettings: "'wdth' 100, 'wght' 400" }}
               >
-                <p className="block leading-[normal] whitespace-pre" dir="auto">
+                <p className="block leading-none whitespace-pre" dir="rtl" lang="ar">
                   عربي
                 </p>
               </div>
