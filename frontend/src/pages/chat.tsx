@@ -960,7 +960,7 @@ export default function ChatPage() {
         </div>
 
         {/* Chat History List */}
-        <div className="absolute left-[22px] top-[219.53px] w-[264px] max-h-[400px] overflow-y-auto scrollbar-cbo">
+        <div className="absolute left-[22px] top-[219.53px] bottom-[24px] w-[264px] overflow-y-auto scrollbar-cbo pr-1">
           {chatSessions.length === 0 ? (
             <div
               className="font-['Source_Sans_Pro:Regular',_sans-serif] leading-[0] not-italic opacity-60 text-[#17365f] text-[20px] text-nowrap"
@@ -1006,7 +1006,7 @@ export default function ChatPage() {
 
         {/* Header */}
         <div
-          className="absolute box-border content-stretch flex gap-[37px] items-center justify-start left-[1510px] p-0 top-10"
+          className="absolute box-border content-stretch flex gap-3.5 items-center justify-end right-12 p-0 top-10"
           data-node-id="1489:462"
         >
           {/* Language Toggle */}
@@ -1045,38 +1045,6 @@ export default function ChatPage() {
             </button>
           </div>
 
-          {/* Header Icons */}
-          <div
-            className="box-border content-stretch flex gap-4 items-center justify-start p-0 relative shrink-0"
-            data-node-id="1489:463"
-          >
-            <button
-              className="relative shrink-0 size-7 hover:opacity-70 transition-opacity"
-              data-name="material-symbols:mail-outline-rounded"
-              data-node-id="1489:464"
-              title="Messages"
-            >
-              <img alt="Messages" className="block max-w-none size-full" src={imgMaterialSymbolsMailOutlineRounded} />
-            </button>
-            <button
-              className="relative shrink-0 size-7 hover:opacity-70 transition-opacity"
-              data-name="material-symbols:bookmark-outline-rounded"
-              data-node-id="1489:466"
-              title="Bookmarks"
-            >
-              <img alt="Bookmarks" className="block max-w-none size-full" src={imgMaterialSymbolsBookmarkOutlineRounded} />
-            </button>
-            <button
-              className="overflow-clip relative shrink-0 size-7 hover:opacity-70 transition-opacity"
-              data-name="mingcute:notification-line"
-              data-node-id="1489:468"
-              title="Notifications"
-            >
-              <div className="absolute inset-[8.33%_12.76%_0.78%_12.76%]" data-name="Group" data-node-id="1489:469">
-                <img alt="Notifications" className="block max-w-none size-full" src={imgGroup} />
-              </div>
-            </button>
-          </div>
 
           {/* User Avatar */}
           <div className="relative">
