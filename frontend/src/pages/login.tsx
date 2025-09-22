@@ -49,7 +49,7 @@ export default function Login() {
         // Store token and user info
         localStorage.setItem('token', result.data.access_token);
         localStorage.setItem('user_info', JSON.stringify(result.data.user));
-        router.push('/dashboard');
+        router.push('/chat');
       } else {
         setError(result.error || 'Login failed. Please try again.');
       }
