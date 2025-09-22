@@ -1021,10 +1021,7 @@ export default function ChatPage() {
               data-node-id="1489:1964"
               data-testid="language-toggle"
             >
-              <div
-                className="flex flex-col justify-center leading-none relative shrink-0 text-[#000000] text-[20px] text-center text-nowrap font-arabic"
-                data-node-id="1489:1965"
-              >
+              <div className="font-['Source_Sans_Pro:Regular',_sans-serif] leading-[0] not-italic relative shrink-0 text-[#000000] text-[20px] text-center text-nowrap font-arabic" data-node-id="1489:1965">
                 <p className="block leading-none whitespace-pre" dir="rtl" lang="ar">
                   عربي
                 </p>
@@ -1036,10 +1033,7 @@ export default function ChatPage() {
                 }`}
               data-node-id="1489:1966"
             >
-              <div
-                className="flex flex-col font-['Source_Sans_Pro:SemiBold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#000000] text-[20px] text-center text-nowrap"
-                data-node-id="1489:1967"
-              >
+              <div className="font-['Source_Sans_Pro:SemiBold',_sans-serif] leading-[0] not-italic relative shrink-0 text-[#000000] text-[20px] text-center text-nowrap" data-node-id="1489:1967">
                 <p className="block leading-[normal] whitespace-pre">ENG</p>
               </div>
             </button>
@@ -1054,10 +1048,7 @@ export default function ChatPage() {
               data-node-id="1489:472"
               title="Logout"
             >
-              <div
-                className="flex flex-col font-['Source_Sans_Pro:SemiBold',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#ffffff] text-[20px] text-center text-nowrap"
-                data-node-id="1489:473"
-              >
+              <div className="font-['Source_Sans_Pro:SemiBold',_sans-serif] leading-[0] not-italic relative shrink-0 text-[#ffffff] text-[20px] text-center text-nowrap" data-node-id="1489:473">
                 <p className="block leading-[normal] whitespace-pre">{userInfo?.username?.substring(0, 2).toUpperCase() || 'AS'}</p>
               </div>
             </button>
@@ -1066,7 +1057,7 @@ export default function ChatPage() {
 
         {/* Main Chat Container */}
         <div
-          className={`absolute bg-[#ffffff] box-border content-stretch flex flex-col h-[calc(100vh-140px)] items-center justify-start left-[309px] overflow-hidden pb-4 pt-0 px-0 rounded-3xl top-[109px] ${showSummary ? 'w-[1048px]' : 'right-12'
+          className={`absolute bg-[#ffffff] box-border content-stretch flex flex-col items-center justify-start left-[309px] top-[109px] bottom-6 overflow-hidden pb-4 pt-0 px-0 rounded-3xl ${showSummary ? 'w-[1048px]' : 'right-12'
             }`}
           data-node-id="1496:2125"
         >
@@ -1098,7 +1089,7 @@ export default function ChatPage() {
             </button>
           </div>
           {/* Messages Display */}
-          <div className={`bg-[#ffffff] box-border content-stretch flex flex-col ${messages.length === 0 ? 'gap-8' : 'gap-10'} ${messages.length === 0 ? 'flex-none' : 'flex-1'} min-h-0 items-center ${messages.length === 0 ? 'justify-start' : 'justify-start'} pb-0 ${messages.length === 0 ? 'pt-2' : 'pt-6'} px-12 relative rounded-3xl w-full ${messages.length === 0 ? 'overflow-visible' : 'overflow-y-auto scrollbar-cbo'}`} data-node-id="1496:2136" data-testid="chat-messages">
+          <div className="bg-[#ffffff] box-border content-stretch flex flex-col gap-10 flex-1 min-h-0 items-center justify-start pb-24 pt-8 px-12 relative rounded-3xl w-full overflow-y-auto scrollbar-cbo stable-gutter" data-node-id="1496:2136" data-testid="chat-messages">
             {messages.length > 0 ? (
               <div className={`content-stretch flex flex-col items-end justify-start relative ${showSummary ? 'w-[809px]' : 'w-full max-w-4xl'
                 }`} data-node-id="1496:2137">
@@ -1138,7 +1129,9 @@ export default function ChatPage() {
                           </div>
                           <div className="content-stretch flex flex-col gap-2 items-start justify-start relative shrink-0 w-full pr-6" data-node-id="1496:2151">
                             <div className="bg-white rounded-[18px] px-5 py-3 shadow w-fit max-w-[640px] md:max-w-[700px] lg:max-w-[760px] font-['Source_Sans_Pro:Regular',_sans-serif] leading-[28px] text-[#15182f] text-[18px]" data-node-id="1496:2152" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-                              <p className="whitespace-pre-wrap break-words">{message.text}</p>
+                              <p className="whitespace-pre-wrap">
+                                {message.text}
+                              </p>
                             </div>
                             <div className="content-stretch flex gap-[13px] items-center justify-start relative shrink-0 mt-1" data-node-id="1496:2153">
                               <button
@@ -1287,7 +1280,7 @@ export default function ChatPage() {
           </div>
 
           {/* Input Form - Figma Design (below messages) */}
-          <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 items-start justify-center px-3.5 py-[15px] relative rounded-[10px] shrink-0 w-[809px] mx-auto mt-4" data-node-id="1496:2035">
+          <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 items-start justify-center px-3.5 py-[15px] relative rounded-[10px] shrink-0 w-full max-w-[809px] mx-auto mt-2" data-node-id="1496:2035">
             <div aria-hidden="true" className="absolute border border-[#e2e2e2] border-solid inset-0 pointer-events-none rounded-[10px]" />
             <form onSubmit={handleSendMessage} className="content-stretch flex flex-col gap-6 items-start justify-start relative shrink-0 w-full" data-node-id="1496:2036">
               {selectedFile && (
@@ -1321,7 +1314,7 @@ export default function ChatPage() {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  className="w-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-[20px] text-[#5b5b5f] font-['Source_Sans_Pro:Regular',_sans-serif] placeholder-[#5b5b5f] disabled:opacity-50 disabled:cursor-not-allowed leading-[normal]"
+                  className="w-full h-12 input-stable bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-[20px] text-[#5b5b5f] font-['Source_Sans_Pro:Regular',_sans-serif] placeholder-[#5b5b5f] disabled:opacity-50 disabled:cursor-not-allowed leading-[normal]"
                   placeholder={language === 'ar' ? 'اسألني أي شيء' : 'Ask me anything'}
                   dir={language === 'ar' ? 'rtl' : 'ltr'}
                   disabled={isLoading}
@@ -1452,7 +1445,7 @@ export default function ChatPage() {
           </div>
 
           {/* Summary Content */}
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-cbo p-[26px] pt-[27px]" data-node-id="1496:2397">
+          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-cbo stable-gutter p-[26px] pt-[27px]" data-node-id="1496:2397">
             {isGeneratingSummary ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
